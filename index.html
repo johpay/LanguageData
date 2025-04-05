@@ -1,375 +1,164 @@
-<!DOCTYPE html>
-
-<html lang="en">
-
+<!DOCTYPE html><html lang="en">
 <head>
-
-  <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Nala's-Vokabeltrainer</title>
-
-  <link rel="manifest" href="manifest.json">
-
-  <style>
-
-    body { font-family: sans-serif; text-align: center; background-color: #f2f2f2; padding: 2rem; }
-
-    .card, .question-box { background: white; padding: 2rem; margin: 1rem auto; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; }
-
-    button { margin: 0.5rem; padding: 1rem; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; }
-
-    .flashcard { font-size: 1.5rem; margin: 1rem 0; }
-
-    .progress { margin: 1rem 0; font-weight: bold; }
-
-    select, input[type="number"] { padding: 0.5rem; margin: 0.5rem; font-size: 1rem; }
-
-  </style>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Französisch-Vokabeltrainer</title>
+  <link rel="manifest" href="manifest.json" />
 </head>
-
 <body>
-
-  <h1>Französisch-Vokabeltrainer</h1>
-
-  <input type="file" id="file-input" accept=".csv">
-
-  <div>
-
-    <label for="mode-select">Lernmodus:</label>
-
-    <select id="mode-select">
-
-      <option value="mixed">Gemischt</option>
-
-      <option value="flashcard">Nur Flashcards</option>
-
-      <option value="fill">Nur Lückentext</option>
-
-      <option value="multiple">Nur Multiple Choice</option>
-
-      <option value="audioFR">Nur Audio (Französisch Hören)</option>
-
-      <option value="audioDE">Nur Audio (Deutsch Hören)</option>
-
-      <option value="review">Nur falsche Wörter</option>
-
-    </select>
-
-    <label for="max-questions">Fragen pro Runde:</label>
-
-    <input type="number" id="max-questions" value="20" min="1" max="100">
-
-  </div>
-
-  <div id="app"></div>
-
-
-
-  <script>
-
-    let data = [], currentRound = [], difficultWords = [], questionIndex = 0;
-
-    let roundCorrect = 0, totalCorrect = 0, totalQuestions = 0;
-
-    let mode = 'mixed';
-
-
-
-    document.getElementById('file-input').addEventListener('change', function(evt) {
-
-      const file = evt.target.files[0];
-
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-
-        const lines = e.target.result.trim().split('\n');
-
-        data = lines.map(line => {
-
-          const [fr, de] = line.split(',');
-
-          return { fr: fr.trim(), de: de.trim() };
-
-        });
-
-        startNewRound();
-
-      };
-
-      reader.readAsText(file);
-
-    });
-
-
-
-    document.getElementById('mode-select').addEventListener('change', function(e) {
-
-      mode = e.target.value;
-
-    });
-
-
-
-    document.getElementById('max-questions').addEventListener('change', function(e) {
-
-      if (!isNaN(parseInt(e.target.value))) startNewRound();
-
-    });
-
-
-
-    function startNewRound() {
-
-      questionIndex = 0;
-
-      roundCorrect = 0;
-
-      const maxQuestions = parseInt(document.getElementById('max-questions').value) || 20;
-
-      if (mode === 'review') {
-
-        currentRound = shuffle(difficultWords).slice(0, maxQuestions);
-
-      } else {
-
-        currentRound = shuffle(data).slice(0, maxQuestions);
-
-      }
-
-      showNextQuestion();
-
-    }
-
-
-
-    function showNextQuestion() {
-
-      if (questionIndex >= currentRound.length) {
-
-        totalCorrect += roundCorrect;
-
-        totalQuestions += currentRound.length;
-
-        document.getElementById('app').innerHTML = `
-
-          <div class="card">
-
-            <h2>Fertig!</h2>
-
-            <p class="progress">Diese Runde: ${roundCorrect} von ${currentRound.length} richtig</p>
-
-            <p class="progress">Gesamt: ${totalCorrect} von ${totalQuestions} richtig</p>
-
-            <p class="progress">Gespeicherte schwierige Wörter: ${difficultWords.length}</p>
-
-            <button onclick="startNewRound()">Neue Runde starten</button>
-
-          </div>`;
-
-        return;
-
-      }
-
-
-
-      const entry = currentRound[questionIndex];
-
-      const currentMode = mode === 'mixed' ? pickRandom(['flashcard', 'fill', 'multiple', 'audioFR', 'audioDE']) : mode;
-
-      if (currentMode === 'flashcard') showFlashcard(entry);
-
-      else if (currentMode === 'fill') showFillInBlank(entry);
-
-      else if (currentMode === 'multiple') showMultipleChoice(entry);
-
-      else if (currentMode === 'audioFR') showAudioQuestion(entry, 'fr');
-
-      else showAudioQuestion(entry, 'de');
-
-    }
-
-
-
-    function showFlashcard(entry) {
-
-      document.getElementById('app').innerHTML = `
-
-        <div class="card">
-
-          <div class="progress">Frage ${questionIndex + 1} von ${currentRound.length}</div>
-
-          <h3>Flashcard (Klicken zum Umdrehen)</h3>
-
-
-
-${entry.fr}</div>
-
-
-
-entry.de}')">Sprich Antwort</button>
-
-
-
-
-
-
-entry.de}')">${c}</button>`).join('<br>')}
-
-
-
-        </div>`;
-
-    }
-
-
-
-    function checkMC(selected, correct) {
-
-      let msg;
-
-      if (selected === correct) {
-
-        roundCorrect++;
-
-        msg = "Richtig!";
-
-      } else {
-
-        msg = `Falsch! Korrekt: ${correct}`;
-
-        const entry = currentRound[questionIndex];
-
-if (!difficultWords.find(e => e.fr === entry.fr && e.de === entry.de)) {
-
-          difficultWords.push(entry);
-
-        }
-
-      }
-
-      document.getElementById('app').innerHTML += `<p>${msg}</p><button onclick="next()">Weiter</button>`;
-
-    }
-
-
-
-    function showAudioQuestion(entry, language) {
-
-const prompt = language === 'fr' ? entry.fr : entry.de;
-
-const correct = language === 'fr' ? entry.de : entry.fr;
-
-      speakText(prompt, language);
-
-
-
-      document.getElementById('app').innerHTML = `
-
-        <div class="question-box">
-
-          <div class="progress">Frage ${questionIndex + 1} von ${currentRound.length}</div>
-
-          <h3>Höre und schreibe die Übersetzung:</h3>
-
-          <button onclick="speakText('${prompt}', '${language}')">Wiederholen</button>
-
-          <br><input type="text" id="user-answer" placeholder="Antwort">
-
-          <button onclick="startSpeechInput('${correct}')">Sprich Antwort</button>
-
-          <br><button onclick="checkFill('${correct}')">Prüfen</button>
-
-        </div>`;
-
-    }
-
-
-
-    function speakText(text, lang) {
-
-      const utter = new SpeechSynthesisUtterance(text);
-
-      utter.lang = lang === 'fr' ? 'fr-FR' : 'de-DE';
-
-      window.speechSynthesis.speak(utter);
-
-    }
-
-
-
-    function startSpeechInput(expected) {
-
-      if (!('webkitSpeechRecognition' in window)) {
-
-        alert("Spracherkennung wird von diesem Browser nicht unterstützt.");
-
-        return;
-
-      }
-
-      const recognition = new webkitSpeechRecognition();
-
-      recognition.lang = 'de-DE';
-
-      recognition.interimResults = false;
-
-      recognition.maxAlternatives = 1;
-
-      recognition.start();
-
-      recognition.onresult = function(event) {
-
-        const transcript = event.results[0][0].transcript;
-
-        document.getElementById('user-answer').value = transcript;
-
-      };
-
-    }
-
-
-
-    function next() {
-
-      questionIndex++;
-
-      showNextQuestion();
-
-    }
-
-
-
-    function shuffle(array) {
-
-      return array.sort(() => Math.random() - 0.5);
-
-    }
-
-
-
-    function pickRandom(arr) {
-
-      return arr[Math.floor(Math.random() * arr.length)];
-
-    }
-
-
-
-    function getRandomOptions(exclude, count = 3) {
-
-const options = data.filter(e => e.de !== exclude).map(e => e.de);
-
-      return shuffle(options).slice(0, count);
-
-    }
-
-  </script>
-
-</body>
-
+  <h1>Französisch-Vokabeltrainer</h1>
+  <input type="file" id="file-input" accept=".csv" />
+  <div>
+    <label for="mode-select">Lernmodus:</label>
+    <select id="mode-select">
+      <option value="mixed">Gemischt</option>
+      <option value="flashcard">Nur Flashcards</option>
+      <option value="fill">Nur Lückentext</option>
+      <option value="multiple">Nur Multiple Choice</option>
+      <option value="audioFR">Nur Audio (Französisch Hören)</option>
+      <option value="audioDE">Nur Audio (Deutsch Hören)</option>
+      <option value="review">Nur falsche Wörter</option>
+    </select>
+    <label for="max-questions">Fragen pro Runde:</label>
+    <input type="number" id="max-questions" value="20" min="1" max="100" />
+  </div>
+  <div id="app">App wird geladen...</div>  <script>
+    let data = [], currentRound = [], difficultWords = [], questionIndex = 0;
+    let roundCorrect = 0, totalCorrect = 0, totalQuestions = 0;
+    let mode = 'mixed';
+
+    document.getElementById('file-input').addEventListener('change', function(evt) {
+      const file = evt.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const lines = e.target.result.trim().split('\n');
+        data = lines.map(line => {
+          const [fr, de] = line.split(',');
+          return { fr: fr.trim(), de: de.trim() };
+        });
+        startNewRound();
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('mode-select').addEventListener('change', function(e) {
+      mode = e.target.value;
+    });
+
+    document.getElementById('max-questions').addEventListener('change', function(e) {
+      if (!isNaN(parseInt(e.target.value))) startNewRound();
+    });
+
+    function startNewRound() {
+      questionIndex = 0;
+      roundCorrect = 0;
+      const maxQuestions = parseInt(document.getElementById('max-questions').value) || 20;
+      currentRound = (mode === 'review') ? shuffle(difficultWords).slice(0, maxQuestions) : shuffle(data).slice(0, maxQuestions);
+      showNextQuestion();
+    }
+
+    function showNextQuestion() {
+      if (questionIndex >= currentRound.length) {
+        totalCorrect += roundCorrect;
+        totalQuestions += currentRound.length;
+        document.getElementById('app').innerHTML = `
+          <div>
+            <h2>Fertig!</h2>
+            <p>Diese Runde: ${roundCorrect} von ${currentRound.length} richtig</p>
+            <p>Gesamt: ${totalCorrect} von ${totalQuestions} richtig</p>
+            <p>Gespeicherte schwierige Wörter: ${difficultWords.length}</p>
+            <button onclick="startNewRound()">Neue Runde starten</button>
+          </div>`;
+        return;
+      }
+      const entry = currentRound[questionIndex];
+      const currentMode = (mode === 'mixed') ? pickRandom(['flashcard', 'fill', 'multiple', 'audioFR', 'audioDE']) : mode;
+      if (currentMode === 'flashcard') showFlashcard(entry);
+      else if (currentMode === 'fill') showFillInBlank(entry);
+      else if (currentMode === 'multiple') showMultipleChoice(entry);
+      else showAudioQuestion(entry, currentMode === 'audioFR' ? 'fr' : 'de');
+    }
+
+    function showFlashcard(entry) {
+      document.getElementById('app').innerHTML = `
+        <div>
+          <h3>Flashcard</h3>
+          <p>${entry.fr}</p>
+          <button onclick="alert('${entry.de}')">Antwort anzeigen</button>
+          <button onclick="next()">Nächste</button>
+        </div>`;
+    }
+
+    function showFillInBlank(entry) {
+      document.getElementById('app').innerHTML = `
+        <div>
+          <h3>Ergänze auf Deutsch:</h3>
+          <p>${entry.fr}</p>
+          <input type="text" id="user-answer" placeholder="Antwort" />
+          <button onclick="checkFill('${entry.de}', '${entry.fr}')">Prüfen</button>
+        </div>`;
+    }
+
+    function checkFill(correct, fr) {
+      const answer = document.getElementById('user-answer').value.trim();
+      let msg = answer.toLowerCase() === correct.toLowerCase() ? "Richtig!" : `Falsch! Korrekt: ${correct}`;
+      if (msg.startsWith("Falsch") && !difficultWords.find(e => e.fr === fr)) difficultWords.push({ fr: fr, de: correct });
+      else roundCorrect++;
+      document.getElementById('app').innerHTML += `<p>${msg}</p><button onclick="next()">Weiter</button>`;
+    }
+
+    function showMultipleChoice(entry) {
+      const choices = shuffle([entry.de, ...getRandomOptions(entry.de)]);
+      document.getElementById('app').innerHTML = `
+        <div>
+          <h3>Wähle die passende Übersetzung:</h3>
+          <p>${entry.fr}</p>
+          ${choices.map(c => `<button onclick="checkMC('${c}', '${entry.de}', '${entry.fr}')">${c}</button>`).join('<br />')}
+        </div>`;
+    }
+
+    function checkMC(selected, correct, fr) {
+      let msg = selected === correct ? "Richtig!" : `Falsch! Korrekt: ${correct}`;
+      if (msg.startsWith("Falsch") && !difficultWords.find(e => e.fr === fr)) difficultWords.push({ fr: fr, de: correct });
+      else roundCorrect++;
+      document.getElementById('app').innerHTML += `<p>${msg}</p><button onclick="next()">Weiter</button>`;
+    }
+
+    function showAudioQuestion(entry, lang) {
+      const phrase = lang === 'fr' ? entry.fr : entry.de;
+      const correct = lang === 'fr' ? entry.de : entry.fr;
+      speakText(phrase, lang);
+      document.getElementById('app').innerHTML = `
+        <div>
+          <h3>Höre und schreibe die Übersetzung:</h3>
+          <button onclick="speakText('${phrase}', '${lang}')">Wiederholen</button>
+          <input type="text" id="user-answer" placeholder="Antwort" />
+          <button onclick="checkFill('${correct}', '${phrase}')">Prüfen</button>
+        </div>`;
+    }
+
+    function speakText(text, lang) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = lang === 'fr' ? 'fr-FR' : 'de-DE';
+      window.speechSynthesis.speak(utter);
+    }
+
+    function next() {
+      questionIndex++;
+      showNextQuestion();
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getRandomOptions(exclude, count = 3) {
+      const options = data.filter(e => e.de !== exclude).map(e => e.de);
+      return shuffle(options).slice(0, count);
+    }
+  </script></body>
 </html>
-
